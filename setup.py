@@ -87,6 +87,10 @@ setup(
     name='meowpow',
     version='0.5.2',
     description="C/C++ implementation of Meowpow - the Meowcoin Proof of Work algorithm",
+    long_description=path.join(path.dirname(__file__), 'README.md') and open(
+        path.join(path.dirname(__file__), 'README.md'), encoding='utf-8'
+    ).read(),
+    long_description_content_type='text/markdown',
     url='https://github.com/chfast/meowpow',
     author='Pawel Bylica',
     author_email='pawel@ethereum.org',
