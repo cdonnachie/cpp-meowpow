@@ -7,11 +7,19 @@
 import os
 import subprocess
 import shutil
-from distutils.errors import CCompilerError
 from os import path
 
 from setuptools import setup
 from setuptools.command.build_ext import build_ext as setuptools_build_ext
+
+try:
+    from distutils.errors import CCompilerError
+except Exception:  # Python 3.12+ may not have distutils
+    try:
+        from setuptools.errors import CompileError as CCompilerError
+    except Exception:
+        class CCompilerError(RuntimeError):
+            pass
 
 
 class build_ext(setuptools_build_ext):
@@ -26,9 +34,14 @@ class build_ext(setuptools_build_ext):
         self.skip_cmake_build = False
 
     def run(self):
-        build_dir = self.build_temp
+        build_dir = path.abspath(self.build_temp)
         source_dir = path.dirname(path.abspath(__file__))
-        install_dir = path.join(source_dir, 'dist')
+        # Keep CMake install artifacts inside the build directory so PEP517
+        # isolated builds don't mutate the source tree.
+        install_dir = path.join(build_dir, 'cmake-install')
+
+        os.makedirs(build_dir, exist_ok=True)
+        os.makedirs(install_dir, exist_ok=True)
 
         cmake_opts = [
             '-DCMAKE_INSTALL_PREFIX={}'.format(install_dir),
@@ -38,6 +51,10 @@ class build_ext(setuptools_build_ext):
             '-DMEOWPOW_BUILD_TESTS=OFF',
             '-DMEOWPOW_INSTALL_CMAKE_CONFIG=OFF'
         ]
+
+        # Prefer a deterministic build type for single-config generators.
+        if not any(opt.startswith('-DCMAKE_BUILD_TYPE=') for opt in cmake_opts):
+            cmake_opts.append('-DCMAKE_BUILD_TYPE=Release')
 
         generator = os.environ.get('GENERATOR')
         if generator:
@@ -74,13 +91,13 @@ setup(
     author='Pawel Bylica',
     author_email='pawel@ethereum.org',
     license='Apache License, Version 2.0',
+    license_files=['LICENSE'],
 
     package_dir={'': 'bindings/python'},
     packages=['meowpow'],
     cffi_modules=['bindings/python/meowpow/_build.py:ffibuilder'],
 
-    python_requires='>=3.5',
-    setup_requires=['cffi>=1.12'],
+    python_requires='>=3.10',
     install_requires=['cffi>=1.12'],
 
     test_suite='tests.test_meowpow',
@@ -92,8 +109,10 @@ setup(
         'Programming Language :: C',
         'Programming Language :: C++',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ],
 )

@@ -26,6 +26,29 @@ cmake ..
 cmake --build .
 ```
 
+### Python wheel (PyPI)
+
+This repo includes Python bindings (CFFI) and can build a binary wheel.
+
+```sh
+py -m pip install -U build
+py -m build -w
+```
+
+The wheel will be written to the `dist/` directory.
+
+Note: building a wheel requires a working C/C++ toolchain and CMake.
+
+#### Multiple Python versions (3.10–3.13)
+
+Binary wheels are Python-version-specific (e.g. cp310, cp311, ...). To build a
+set of wheels for multiple Python versions, use `cibuildwheel`:
+
+```sh
+py -m pip install -U cibuildwheel
+py -m cibuildwheel --output-dir dist
+```
+
 ## Usage
 
 See [meowpow.hpp] for list of exported function and documentation.
